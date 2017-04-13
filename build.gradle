@@ -24,17 +24,6 @@ apply plugin: 'idea'
 apply plugin: 'idea-utils'
 apply plugin: 'org.junit.platform.gradle.plugin'
 
-idea {
-    project {
-        ipr {
-            withXml { xmlProvider ->
-                def project = xmlProvider.asNode()
-                def runConfigs = new XmlParser().parse(new File("config/intellij_runconfigs.xml"))
-                project.append(runConfigs)
-            }
-        }
-    }
-}
 
 repositories {
     mavenCentral()
@@ -82,7 +71,6 @@ jar {
 shadowJar {
     dependencies {
         include(dependency('org.jetbrains.kotlin:.*:.*'))
-       // exclude(dependency('org.spigotmc:spigot:.*'))
     }
 }
 

@@ -6,11 +6,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Command Framework - Command <br>
- * The command annotation used to designate methods as commands. All methods
- * should have a single CommandArgs argument
  *
- * @author minnymin3
  */
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
