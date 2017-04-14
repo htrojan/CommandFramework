@@ -38,6 +38,7 @@ repositories {
 sourceSets {
     main.kotlin.srcDirs = ['src']
     main.java.srcDirs = []
+    test.java.srcDirs = []
     test.kotlin.srcDirs = ['tests']
 }
 
