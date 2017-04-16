@@ -36,8 +36,8 @@ repositories {
 
 sourceSets {
     main.kotlin.srcDirs = ['src']
-    main.java.srcDirs = []
-    test.java.srcDirs = []
+    main.java.srcDirs = ['src']
+    test.java.srcDirs = ['tests']
     test.kotlin.srcDirs = ['tests']
 }
 
@@ -59,13 +59,6 @@ processResources {
             "apiversion": project.property("apiversion"),
             "version"   : project.property("version")
     ]
-}
-
-
-jar {
-    actions = []
-    dependsOn = []
-    dependsOn('shadowJar')
 }
 
 shadowJar {

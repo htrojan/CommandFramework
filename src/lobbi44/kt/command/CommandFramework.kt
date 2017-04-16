@@ -26,7 +26,7 @@ class CommandFramework(private val plugin : Plugin) : CommandExecutor{
     init {
         if (plugin.server.pluginManager is SimplePluginManager){
             val manager = plugin.server.pluginManager
-            val mapField = SimplePluginManager::class.java.getDeclaredField("bukkitCommands")
+            val mapField = SimplePluginManager::class.java.getDeclaredField("commandMap")
             mapField.isAccessible = true
             try {
                 bukkitCommands = mapField.get(manager) as CommandMap
