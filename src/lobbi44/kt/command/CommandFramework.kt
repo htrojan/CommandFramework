@@ -1,6 +1,5 @@
 package lobbi44.kt.command
 
-import com.sun.javafx.image.BytePixelSetter
 import lobbi44.kt.command.util.CommandTree
 import org.bukkit.command.Command
 import org.bukkit.command.CommandExecutor
@@ -9,9 +8,6 @@ import org.bukkit.command.CommandSender
 import org.bukkit.plugin.Plugin
 import org.bukkit.plugin.SimplePluginManager
 import java.lang.reflect.Method
-import java.util.*
-import kotlin.reflect.jvm.internal.impl.load.kotlin.JvmType
-import kotlin.reflect.jvm.kotlinFunction
 
 /**
  * @author lobbi44
@@ -62,7 +58,7 @@ class CommandFramework(private val plugin : Plugin) : CommandExecutor{
         val commandLabel = subCommands[0]
         val isCommandPresent = commandTree.hasChild(commandLabel)
         commandTree.addChain(subCommands, Pair(method, obj))
-        //This ia only a subCommand to a already registered command that is already registered in the Bukkit bukkitCommands
+        //This ia only a subCommand to a already registered command in the Bukkit bukkitCommands
         if(isCommandPresent)
             return
 
@@ -86,8 +82,8 @@ class CommandFramework(private val plugin : Plugin) : CommandExecutor{
     /**
      * This implementation of the Bukkit Command class is used to delegate all executions of the commands to the CommandFramework
      */
-    private class CustomCommand(name : String?, description: String? = null, usageMessage: String? = null, aliases: MutableList<String>? = null
-    , var executor: (CommandSender?, Command?, String?, Array<out String>?) -> Boolean)
+    private class CustomCommand(name: String?, description: String? = null, usageMessage: String? = null, aliases: ArrayList<String>? = null
+                                , var executor: (CommandSender?, Command?, String?, Array<out String>?) -> Boolean)
         : Command(name, description, usageMessage, aliases) {
 
 
