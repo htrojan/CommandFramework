@@ -8,16 +8,16 @@ import org.bukkit.command.CommandSender
 import org.bukkit.plugin.Plugin
 import org.bukkit.plugin.SimplePluginManager
 import java.lang.reflect.Method
+import java.util.logging.Logger
 
 /**
  * @author lobbi44
  */
 
-class CommandFramework(private val plugin : Plugin) : CommandExecutor{
+class CommandFramework(private val plugin: Plugin, private val logger: Logger) : CommandExecutor {
 
-    lateinit var bukkitCommands: CommandMap
-    val commandTree = CommandTree<String, Pair<Method, Any>>()
-    val logger = plugin.logger
+    private lateinit var bukkitCommands: CommandMap
+    private val commandTree = CommandTree<String, Pair<Method, Any>>()
 
     init {
         if (plugin.server.pluginManager is SimplePluginManager){
@@ -39,18 +39,21 @@ class CommandFramework(private val plugin : Plugin) : CommandExecutor{
      *
      * @param obj The object to register the commands from
      */
-    fun registerCommands(obj: Any) {
+    fun registerCommands(obj: Any): Int {
         logger.info("RegisterCommands called")
+        var reg = 0;
         for (method in obj.javaClass.methods){
             logger.info("Method \"${method.name}\" found")
             val command = method.getAnnotation(lobbi44.kt.command.annotations.Command::class.java)
             if (command != null && method.parameterCount == 1 && method.parameterTypes[0] == CommandEvent::class.java && method.returnType == Boolean::class.java) {
                 registerCommand(command, obj, method)
+                ++reg
                 logger.info("This method has been registered")
             }
             else
                 continue
         }
+        return reg
     }
 
     private fun registerCommand(command: lobbi44.kt.command.annotations.Command, obj: Any, method: Method) {
@@ -62,7 +65,7 @@ class CommandFramework(private val plugin : Plugin) : CommandExecutor{
         if(isCommandPresent)
             return
 
-        bukkitCommands.register(plugin.name, CustomCommand(commandLabel, command.description, command.usage, null, this::onCommand))
+        bukkitCommands.register(plugin.name, DelegateCommand(commandLabel, command.description, command.usage, listOf(), this::onCommand))
     }
 
     /**
@@ -82,8 +85,8 @@ class CommandFramework(private val plugin : Plugin) : CommandExecutor{
     /**
      * This implementation of the Bukkit Command class is used to delegate all executions of the commands to the CommandFramework
      */
-    private class CustomCommand(name: String?, description: String? = null, usageMessage: String? = null, aliases: ArrayList<String>? = null
-                                , var executor: (CommandSender?, Command?, String?, Array<out String>?) -> Boolean)
+    private class DelegateCommand(name: String?, description: String? = null, usageMessage: String? = null, aliases: List<String>
+                                  , var executor: (CommandSender?, Command?, String?, Array<out String>?) -> Boolean)
         : Command(name, description, usageMessage, aliases) {
 
 
