@@ -77,6 +77,7 @@ class CommandFramework(private val plugin: Plugin, private val logger: Logger) :
         //todo: Check for null more efficiently for better error handling
         val searchList : List<String> = if(args == null) listOf<String>(label!!) else listOf(label!!) + args.toList()
         val cmd = commandTree.getValueIgnored(searchList)
+        if (cmd == null) return false
         val checkedArgs = args ?: arrayOf() //Just checks for null and inserts an empty array if needed
         val result = cmd.first.invoke(cmd.second, CommandEvent(sender!!, command!!, label, checkedArgs)) as Boolean
         return result

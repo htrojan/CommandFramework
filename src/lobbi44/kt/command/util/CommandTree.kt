@@ -2,7 +2,6 @@ package lobbi44.kt.command.util
 
 import java.security.InvalidParameterException
 import java.util.*
-import javax.xml.bind.ValidationEvent
 
 /**
  * @author lobbi44
@@ -66,7 +65,7 @@ class CommandTree<K, T>{
         return CommandTree(node)
     }
 
-    fun getValue(names: List<K>): T {
+    fun getValue(names: List<K>): T? {
         val endNode = names.fold(rootNode, {node, name -> node.getChild(name)})
         return getEndNodeValue(endNode)
     }
@@ -75,18 +74,18 @@ class CommandTree<K, T>{
      * Follows the tree until it comes to an end node.
      * All following entries in the list are ignored
      */
-    fun getValueIgnored(names: List<K>): T {
+    fun getValueIgnored(names: List<K>): T? {
         //todo: https://discuss.kotlinlang.org/t/unit-return-value-useful-to-break-out-of-nested-lambdas/2083 to make more performant
         val endNode = names.fold(rootNode, {node, name -> node as? EndNode<K, *> ?: node.getChild(name) })
         return getEndNodeValue(endNode)
     }
 
-    private fun getEndNodeValue(endNode: Node<K>): T {
-        if (endNode is EndNode<K, *>) {
+    /**
+     * @return returns null if the value is not an end node
+     */
+    private fun getEndNodeValue(endNode: Node<K>): T? {
             @Suppress("UNCHECKED_CAST")
-            return (endNode as EndNode<K, T>).value
-        } else
-            throw IllegalArgumentException("The given list of names does not lead to an end with a value attached")
+            return (endNode as? EndNode<K, T>)?.value
     }
 
     fun hasChild(name : K) = rootNode.hasChild(name)
