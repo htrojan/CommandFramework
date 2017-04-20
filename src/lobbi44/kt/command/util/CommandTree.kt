@@ -34,6 +34,11 @@ class CommandTree<K, T>{
         return CommandTree(rootNode.getChild(name))
     }
 
+    fun getChild(names: List<K>): CommandTree<K, T> {
+        val endNode = names.fold(rootNode, { node, name -> node as? EndNode<K, *> ?: node.getChild(name) })
+        return CommandTree(endNode)
+    }
+
     fun getChildren(): Set<K> {
         return rootNode.getChildren()
     }
