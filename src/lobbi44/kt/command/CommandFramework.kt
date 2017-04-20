@@ -97,6 +97,7 @@ class CommandFramework(private val plugin: Plugin, private val logger: Logger) :
             val possibleCommands = commandTree.getChildren()
             val display = "This command could not be found. You may try:\n" + possibleCommands.joinToString("\n", transform = { label + it })
             sender?.sendMessage(display)
+            return false
         }
 
         val checkedArgs = args ?: arrayOf() //Just checks for null and inserts an empty array if needed
