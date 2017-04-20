@@ -34,6 +34,9 @@ class CommandTree<K, T>{
         return CommandTree(rootNode.getChild(name))
     }
 
+    fun getChildren(): Set<K> {
+        return rootNode.getChildren()
+    }
 
     /**
      * Adds a node to the current level of the tree.
@@ -141,6 +144,10 @@ class CommandTree<K, T>{
             if (ret == null)
                 throw IllegalArgumentException("A node with the name ${name} could not be found")
             return ret
+        }
+
+        fun getChildren(): Set<K> {
+            return subNodes.keys
         }
 
     }

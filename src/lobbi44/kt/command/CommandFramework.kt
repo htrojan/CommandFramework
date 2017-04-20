@@ -5,6 +5,9 @@ import org.bukkit.command.Command
 import org.bukkit.command.CommandExecutor
 import org.bukkit.command.CommandMap
 import org.bukkit.command.CommandSender
+import org.bukkit.help.GenericCommandHelpTopic
+import org.bukkit.help.HelpTopic
+import org.bukkit.help.IndexHelpTopic
 import org.bukkit.plugin.Plugin
 import org.bukkit.plugin.SimplePluginManager
 import java.lang.reflect.Method
@@ -20,17 +23,28 @@ class CommandFramework(private val plugin: Plugin, private val logger: Logger) :
     private val commandTree = CommandTree<String, Pair<Method, Any>>()
 
     init {
-        if (plugin.server.pluginManager is SimplePluginManager){
+        if (plugin.server.pluginManager is SimplePluginManager) {
             val manager = plugin.server.pluginManager
             val mapField = SimplePluginManager::class.java.getDeclaredField("commandMap")
             mapField.isAccessible = true
             try {
                 bukkitCommands = mapField.get(manager) as CommandMap
-            }catch (e : Exception){
+            } catch (e: Exception) {
                 plugin.logger.severe("Unable to register commands. CommandTree could not be retrieved!")
                 e.printStackTrace()
             }
         }
+    }
+
+    /**
+     * Registers all registered commands' help under an index named after the plugin
+     */
+    fun registerHelpTopic(permission: String) {
+        val topics = mutableListOf<HelpTopic>()
+        commandTree.getChildren().forEach({ topics.add(GenericCommandHelpTopic(bukkitCommands.getCommand(it))) })
+
+        val help = IndexHelpTopic(plugin.name, "The registered commands", permission, topics)
+        plugin.server.helpMap.addTopic(help)
     }
 
     /**
@@ -41,16 +55,15 @@ class CommandFramework(private val plugin: Plugin, private val logger: Logger) :
      */
     fun registerCommands(obj: Any): Int {
         logger.info("RegisterCommands called")
-        var reg = 0;
-        for (method in obj.javaClass.methods){
+        var reg = 0
+        for (method in obj.javaClass.methods) {
             logger.info("Method \"${method.name}\" found")
             val command = method.getAnnotation(lobbi44.kt.command.annotations.Command::class.java)
             if (command != null && method.parameterCount == 1 && method.parameterTypes[0] == CommandEvent::class.java && method.returnType == Boolean::class.java) {
                 registerCommand(command, obj, method)
                 ++reg
                 logger.info("This method has been registered")
-            }
-            else
+            } else
                 continue
         }
         return reg
@@ -62,7 +75,7 @@ class CommandFramework(private val plugin: Plugin, private val logger: Logger) :
         val isCommandPresent = commandTree.hasChild(commandLabel)
         commandTree.addChain(subCommands, Pair(method, obj))
         //This ia only a subCommand to a already registered command in the Bukkit bukkitCommands
-        if(isCommandPresent)
+        if (isCommandPresent)
             return
 
         bukkitCommands.register(plugin.name, DelegateCommand(commandLabel, command.description, command.usage, listOf(), this::onCommand))
@@ -75,7 +88,7 @@ class CommandFramework(private val plugin: Plugin, private val logger: Logger) :
     override fun onCommand(sender: CommandSender?, command: Command?, label: String?, args: Array<out String>?): Boolean {
 
         //todo: Check for null more efficiently for better error handling
-        val searchList : List<String> = if(args == null) listOf<String>(label!!) else listOf(label!!) + args.toList()
+        val searchList: List<String> = if (args == null) listOf<String>(label!!) else listOf(label!!) + args.toList()
         val cmd = commandTree.getValueIgnored(searchList)
         if (cmd == null) return false
         val checkedArgs = args ?: arrayOf() //Just checks for null and inserts an empty array if needed
