@@ -1,9 +1,7 @@
 package lobbi44.kt.command.util
 
-import org.junit.jupiter.api.Assertions
-import org.junit.jupiter.api.Test
-
 import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Test
 
 /**
  * @author lobbi44
@@ -31,6 +29,15 @@ internal class CommandTreeTest {
         val tree = CommandTree<String, String>()
         tree.addChain(listOf("node1", "node2", "node3"), "value1")
         assertEquals("value1", tree.getValue(listOf("node1", "node2", "node3")))
+    }
+
+    @Test
+    fun getChild() {
+        val tree = CommandTree<String, String>()
+        tree.addChain(listOf("node1", "a1", "a2", "a3"))
+        tree.addChain(listOf("node1", "b1", "b2", "b3"))
+        tree.addChain(listOf("node1", "c1", "c2", "c3"))
+        assertEquals(setOf("a1", "b1", "c1"), tree.getChild(listOf("node1")).getChildren())
     }
 
 }

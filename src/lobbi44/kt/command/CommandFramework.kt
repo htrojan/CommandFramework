@@ -94,8 +94,8 @@ class CommandFramework(private val plugin: Plugin, private val logger: Logger) :
         if (cmd == null) { //Show the correct usage
             val child = commandTree.getChild(searchList)
 
-            val possibleCommands = commandTree.getChildren()
-            val display = "This command could not be found. You may try:\n" + possibleCommands.joinToString("\n", transform = { label + it })
+            val possibleCommands = child.getChildren()
+            val display = "This command could not be found. You may try:\n" + possibleCommands.joinToString(separator = "\n", transform = { "/" + label + " " + it })
             sender?.sendMessage(display)
             return false
         }
