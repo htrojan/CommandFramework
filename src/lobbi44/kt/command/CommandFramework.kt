@@ -54,31 +54,28 @@ class CommandFramework(private val plugin: Plugin, private val logger: Logger) :
      * @param obj The object to register the commands from
      */
     fun registerCommands(obj: Any): Int {
-        logger.info("RegisterCommands called")
         var reg = 0
-        for (method in obj.javaClass.methods) {
-            logger.info("Method \"${method.name}\" found")
-            val command = method.getAnnotation(lobbi44.kt.command.annotations.Command::class.java)
-            if (command != null && method.parameterCount == 1 && method.parameterTypes[0] == CommandEvent::class.java && method.returnType == Boolean::class.java) {
-                registerCommand(command, obj, method)
+        obj.javaClass.methods.forEach {
+            val commandData = it.getAnnotation(lobbi44.kt.command.annotations.Command::class.java)
+            val signatureMatches = it.parameterCount == 1 && it.parameterTypes[0] == CommandEvent::class.java && it.returnType == Boolean::class.java
+            if (commandData != null && signatureMatches) {
+                registerCommand(commandData, obj, it)
                 ++reg
-                logger.info("This method has been registered")
-            } else
-                continue
+            }
         }
         return reg
     }
 
-    private fun registerCommand(command: lobbi44.kt.command.annotations.Command, obj: Any, method: Method) {
-        val subCommands = command.name.split(".")
+    private fun registerCommand(commandData: lobbi44.kt.command.annotations.Command, obj: Any, method: Method) {
+        val subCommands = commandData.name.split(".")
         val commandLabel = subCommands[0]
         val isCommandPresent = commandTree.hasChild(commandLabel)
         commandTree.addChain(subCommands, Pair(method, obj))
-        //This ia only a subCommand to a already registered command in the Bukkit bukkitCommands
+        //This ia only a subCommand to a already registered commandData in the Bukkit bukkitCommands
         if (isCommandPresent)
             return
 
-        bukkitCommands.register(plugin.name, DelegateCommand(commandLabel, command.description, command.usage, listOf(), this::onCommand))
+        bukkitCommands.register(plugin.name, DelegateCommand(commandLabel, commandData.description, commandData.usage, listOf(), this::onCommand))
     }
 
     /**
@@ -86,24 +83,26 @@ class CommandFramework(private val plugin: Plugin, private val logger: Logger) :
      * The commands' names are split up into their label and their args
      */
     override fun onCommand(sender: CommandSender?, command: Command?, label: String?, args: Array<out String>?): Boolean {
-
-        //todo: Check for null more efficiently for better error handling
-        val searchList: List<String> = if (args == null) listOf<String>(label!!) else listOf(label!!) + args.toList()
-        val cmd = commandTree.getValueIgnored(searchList)
+        val pathToCommand: List<String> = if (args == null) listOf(label!!) else listOf(label!!) + args.toList()
+        val cmd = commandTree.getValueIgnored(pathToCommand)
 
         if (cmd == null) { //Show the correct usage
-            val child = commandTree.getChild(searchList)
+            val child = commandTree.getChild(pathToCommand)
 
             val possibleCommands = child.getChildren()
-            val display = "This command could not be found. You may try:\n" + possibleCommands.joinToString(separator = "\n", transform = { "/" + label + " " + it })
+            val display = toUsageString(label, possibleCommands)
             sender?.sendMessage(display)
             return false
         }
 
-        val checkedArgs = args ?: arrayOf() //Just checks for null and inserts an empty array if needed
-        val result = cmd.first.invoke(cmd.second, CommandEvent(sender!!, command!!, label, checkedArgs)) as Boolean
+        val nonNullArgs = args ?: arrayOf()
+        val result = cmd.first.invoke(cmd.second, CommandEvent(sender!!, command!!, label, nonNullArgs)) as Boolean
         return result
     }
+
+    private fun toUsageString(commandLabel: String?, possibleCommands: Set<String>)
+            = "This command could not be found. You may try:\n" +
+            possibleCommands.joinToString(separator = "\n", transform = { "/$commandLabel $it" })
 
     /**
      * This implementation of the Bukkit Command class is used to delegate all executions of the commands to the CommandFramework
