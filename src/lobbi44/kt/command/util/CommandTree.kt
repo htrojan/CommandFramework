@@ -14,23 +14,23 @@ import java.util.*
  * @param T The type of the actual values stored in the leaves
  */
 
-class CommandTree<K, T>{
+class CommandTree<K, T> {
 
     /**
      * The very first node in a tree structure always has an identifier of null
      * and is only used internally
      */
-    private val rootNode : Node<K>
+    private val rootNode: Node<K>
 
-    constructor(){
+    constructor() {
         rootNode = Node(null)
     }
 
-    private constructor(node : Node<K>){
+    private constructor(node: Node<K>) {
         rootNode = node
     }
 
-    fun getChild(name: K) : CommandTree<K, T>{
+    fun getChild(name: K): CommandTree<K, T> {
         return CommandTree(rootNode.getChild(name))
     }
 
@@ -48,7 +48,7 @@ class CommandTree<K, T>{
      * If the value is not null this node will be an end node
      * and no further notes can be attached to it
      */
-    fun addChild(name : K, value : T? = null) {
+    fun addChild(name: K, value: T? = null) {
         val node = makeNode(name, value)
         rootNode.addChild(node)
     }
@@ -64,17 +64,17 @@ class CommandTree<K, T>{
      * @param names The chain of children to create
      * @return A CommandTree originating from the last child in the chan
      */
-    fun addChain(names : List<K>, value : T? = null) : CommandTree<K, T>{
+    fun addChain(names: List<K>, value: T? = null): CommandTree<K, T> {
 
-        val node = names.foldIndexed(rootNode, {i, node : Node<K>, name : K ->
-            val n = if(value != null && i == names.lastIndex) EndNode(name, value) else Node(name)
+        val node = names.foldIndexed(rootNode, { i, node: Node<K>, name: K ->
+            val n = if (value != null && i == names.lastIndex) EndNode(name, value) else Node(name)
             node.addChildIfAbsent(n)
         })
         return CommandTree(node)
     }
 
     fun getValue(names: List<K>): T? {
-        val endNode = names.fold(rootNode, {node, name -> node.getChild(name)})
+        val endNode = names.fold(rootNode, { node, name -> node.getChild(name) })
         return getEndNodeValue(endNode)
     }
 
@@ -85,8 +85,16 @@ class CommandTree<K, T>{
     fun getValueIgnored(names: List<K>): DepthValue<T?> {
         //todo: https://discuss.kotlinlang.org/t/unit-return-value-useful-to-break-out-of-nested-lambdas/2083 to make more performant
         var i = 0
-        val endNode = names.fold(rootNode, { node, name -> ++i; node as? EndNode<K, *> ?: node.getChild(name) })
-        return DepthValue(i, getEndNodeValue(endNode))
+
+        names.foldIndexed(rootNode, { i, node, name ->
+            val child = node.getChild(name)
+            if (child is EndNode<K, *>)
+                return DepthValue(i + 1, getEndNodeValue(node))
+            else
+                child
+        })
+        //This can never be reached
+        return DepthValue(0, null)
     }
 
     data class DepthValue<T>(val depth: Int, val value: T)
@@ -95,15 +103,14 @@ class CommandTree<K, T>{
      * @return returns null if the value is not an end node
      */
     private fun getEndNodeValue(endNode: Node<K>): T? {
-            @Suppress("UNCHECKED_CAST")
-            return (endNode as? EndNode<K, T>)?.value
+        @Suppress("UNCHECKED_CAST")
+        return (endNode as? EndNode<K, T>)?.value
     }
 
-    fun hasChild(name : K) = rootNode.hasChild(name)
+    fun hasChild(name: K) = rootNode.hasChild(name)
 
 
-    private fun makeNode(name : K, value : T? = null) = if (value == null) Node(name) else EndNode(name, value)
-
+    private fun makeNode(name: K, value: T? = null) = if (value == null) Node(name) else EndNode(name, value)
 
 
     /**
@@ -112,7 +119,7 @@ class CommandTree<K, T>{
      * If the name is null, this node cannot be a subnode of any other node, therefore it has to be a rootnode
      * @param K The type of the name-identifier used to query the branches
      */
-    private open class Node<K> (val name: K?){
+    private open class Node<K>(val name: K?) {
         /**
          * This hashMap stores the branches originating from this node.
          * It maps each subNode to its identifier.
@@ -124,7 +131,7 @@ class CommandTree<K, T>{
          * @throws InvalidParameterException if a node with the same name already exists
          * @return The newly created node
          */
-        fun addChild(node: Node<K>) : Node<K> {
+        fun addChild(node: Node<K>): Node<K> {
             //returns the old value if a value is already present
             if (node.name == null) throw IllegalArgumentException("A subnode cannot have a name of null")
             val nodeValue = subNodes.putIfAbsent(node.name, node)
@@ -139,7 +146,7 @@ class CommandTree<K, T>{
          * Otherwise it returns the old node
          * @return The old node if a node with the same name already exists or the new one
          */
-        fun addChildIfAbsent(node: Node<K>) : Node<K>{
+        fun addChildIfAbsent(node: Node<K>): Node<K> {
             if (node.name == null) throw IllegalArgumentException("A subnode cannot have a name of null")
             val oldVal = subNodes.putIfAbsent(node.name, node)
             if (oldVal != null) return oldVal else return node
@@ -164,7 +171,7 @@ class CommandTree<K, T>{
      * This node has no successors and stores the actual value that can be retrieved
      * from the CommandTree
      */
-    private class EndNode<K, T>(name: K, val value: T) : Node<K>(name){
+    private class EndNode<K, T>(name: K, val value: T) : Node<K>(name) {
 
     }
 

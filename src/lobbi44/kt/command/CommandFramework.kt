@@ -99,7 +99,8 @@ class CommandFramework(private val plugin: Plugin, private val logger: Logger) :
         val nonNullArgs: List<String> = args?.drop(treeResult.depth).orEmpty()
 
         val result = cmd.first.invoke(cmd.second, CommandEvent(sender!!, command!!, label, nonNullArgs)) as Boolean
-        return result
+
+        return true
     }
 
     private fun toUsageString(commandLabel: String?, possibleCommands: Set<String>)
