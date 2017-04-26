@@ -82,11 +82,14 @@ class CommandTree<K, T>{
      * Follows the tree until it comes to an end node.
      * All following entries in the list are ignored
      */
-    fun getValueIgnored(names: List<K>): T? {
+    fun getValueIgnored(names: List<K>): DepthValue<T?> {
         //todo: https://discuss.kotlinlang.org/t/unit-return-value-useful-to-break-out-of-nested-lambdas/2083 to make more performant
-        val endNode = names.fold(rootNode, {node, name -> node as? EndNode<K, *> ?: node.getChild(name) })
-        return getEndNodeValue(endNode)
+        var i = 0
+        val endNode = names.fold(rootNode, { node, name -> ++i; node as? EndNode<K, *> ?: node.getChild(name) })
+        return DepthValue(i, getEndNodeValue(endNode))
     }
+
+    data class DepthValue<T>(val depth: Int, val value: T)
 
     /**
      * @return returns null if the value is not an end node

@@ -84,7 +84,8 @@ class CommandFramework(private val plugin: Plugin, private val logger: Logger) :
      */
     override fun onCommand(sender: CommandSender?, command: Command?, label: String?, args: Array<out String>?): Boolean {
         val pathToCommand: List<String> = if (args == null) listOf(label!!) else listOf(label!!) + args.toList()
-        val cmd = commandTree.getValueIgnored(pathToCommand)
+        val treeResult = commandTree.getValueIgnored(pathToCommand)
+        val cmd = treeResult.value
 
         if (cmd == null) { //Show the correct usage
             val child = commandTree.getChild(pathToCommand)
@@ -95,7 +96,8 @@ class CommandFramework(private val plugin: Plugin, private val logger: Logger) :
             return false
         }
 
-        val nonNullArgs = args ?: arrayOf()
+        val nonNullArgs: List<String> = args?.drop(treeResult.depth).orEmpty()
+
         val result = cmd.first.invoke(cmd.second, CommandEvent(sender!!, command!!, label, nonNullArgs)) as Boolean
         return result
     }
