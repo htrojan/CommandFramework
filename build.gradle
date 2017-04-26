@@ -1,24 +1,25 @@
 import org.apache.tools.ant.filters.ReplaceTokens
 
 buildscript {
-    ext{
-        kotlin_version = "1.1.1"
-    }
+    ext.kotlin_version = '1.1.2'
+
     repositories {
         jcenter()
     }
     dependencies {
         classpath group: 'com.github.rodionmoiseev.gradle.plugins', name: 'idea-utils', version: '0.2'
         classpath 'org.junit.platform:junit-platform-gradle-plugin:1.0.0-M2'
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
     }
 }
 
 plugins {
     id "com.github.johnrengelman.shadow" version "1.2.3"
-    id "org.jetbrains.kotlin.jvm" version "1.1.1"
+    id "org.jetbrains.kotlin.jvm" version "$kotlin_version"
 }
 
 apply plugin: 'java'
+apply plugin: 'kotlin'
 apply plugin: 'eclipse'
 apply plugin: 'idea'
 apply plugin: 'org.junit.platform.gradle.plugin'
@@ -48,7 +49,7 @@ sourceCompatibility = project.property("sourceversion")
 
 dependencies {
     compile group: 'org.spigotmc', name: 'spigot-api', version: project.property("apiversion")
-    compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
+    compile "org.jetbrains.kotlin:kotlin-stdlib-jre8:$kotlin_version"
     compile "org.jetbrains.kotlin:kotlin-reflect:$kotlin_version"
 
     testCompile("org.junit.jupiter:junit-jupiter-api:5.0.0-M3")
