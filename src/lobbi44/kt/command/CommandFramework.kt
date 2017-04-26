@@ -96,8 +96,9 @@ class CommandFramework(private val plugin: Plugin, private val logger: Logger) :
             return false
         }
 
-        val nonNullArgs: List<String> = args?.drop(treeResult.depth).orEmpty()
-
+        //-1 cause the label of the command is included in the depth of the tree
+        val nonNullArgs: List<String> = args?.drop(treeResult.depth - 1).orEmpty()
+        logger.info("Correct supplied arguments: ${nonNullArgs.joinToString()}")
         val result = cmd.first.invoke(cmd.second, CommandEvent(sender!!, command!!, label, nonNullArgs)) as Boolean
 
         return true
