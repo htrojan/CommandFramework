@@ -58,6 +58,7 @@ internal class CommandFrameworkTest {
     }
 
 
+    @Ignore
     @Test
     fun testOnCommandArgumentOmitting() {
         val logger = mock(Logger::class.java)

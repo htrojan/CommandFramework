@@ -89,7 +89,7 @@ class CommandTree<K, T> {
         names.foldIndexed(rootNode, { i, node, name ->
             val child = node.getChild(name)
             if (child is EndNode<K, *>)
-                return DepthValue(i + 1, getEndNodeValue(node))
+                return DepthValue(i + 1, getEndNodeValue(child))
             else
                 child
         })
