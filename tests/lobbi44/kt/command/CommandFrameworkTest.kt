@@ -18,6 +18,7 @@ import org.mockito.Mockito.`when`
 import org.mockito.Mockito.mock
 import java.util.logging.Logger
 
+@Ignore
 internal class CommandFrameworkTest {
 
     @Test
