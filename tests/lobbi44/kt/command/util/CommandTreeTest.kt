@@ -55,7 +55,16 @@ internal class CommandTreeTest {
         tree.addChain(listOf("a1", "a2", "a3"), "value1")
         tree.addChain(listOf("b1", "b2", "b3"), "value2")
         tree.addChain(listOf("c1", "c2", "c3"), "value3")
-        assertEquals("value1", tree.getValueIgnored(listOf("a1", "a2", "a3")).value)
+        assertEquals("value1", tree.getValueIgnored(listOf("a1", "a2", "a3")).result)
+    }
+
+    @Test
+    fun testGetChildFurthestCorrectDepth() {
+        val tree = CommandTree<String, String>()
+        tree.addChain(listOf("a1", "a2", "a3"), "value1")
+        tree.addChain(listOf("b1", "b2", "b3"), "value2")
+        tree.addChain(listOf("c1", "c2", "c3"), "value3")
+        assertEquals(2, tree.getChildFurthest(listOf("a1", "a2")).depth)
     }
 
 }

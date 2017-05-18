@@ -7,7 +7,7 @@ import java.util.*
  * @author lobbi44
  *
  * This class provides an uni-directional tree that can be queried from top to bottom.
- * Each Node can either have children or be the end node with the actual value.
+ * Each Node can either have children or be the end node with the actual result.
  * Moreover this tree can have arbitrary root nodes
  *
  * @param K The type of the name used to identify the branches
@@ -31,11 +31,11 @@ class CommandTree<K, T> {
     }
 
     fun getChild(name: K): CommandTree<K, T> {
-        return CommandTree(rootNode.getChild(name))
+        return CommandTree(rootNode.getChildChecked(name))
     }
 
     fun getChild(names: List<K>): CommandTree<K, T> {
-        val endNode = names.fold(rootNode, { node, name -> node as? EndNode<K, *> ?: node.getChild(name) })
+        val endNode = names.fold(rootNode, { node, name -> node as? EndNode<K, *> ?: node.getChildChecked(name) })
         return CommandTree(endNode)
     }
 
@@ -45,7 +45,7 @@ class CommandTree<K, T> {
 
     /**
      * Adds a node to the current level of the tree.
-     * If the value is not null this node will be an end node
+     * If the result is not null this node will be an end node
      * and no further notes can be attached to it
      */
     fun addChild(name: K, value: T? = null) {
@@ -56,10 +56,10 @@ class CommandTree<K, T> {
     /**
      * Creates a chain of nodes in a hierarchical order descending from the roots of this tree.
      * If a node with a given name already exists it will be ignored.
-     * If a value != null is given the last created child will be an end node
-     * with the given value associated with it
+     * If a result != null is given the last created child will be an end node
+     * with the given result associated with it
      *
-     * names = {n1, n2, n3, n4}, value = "Test" will result in a n1->n2->n3->n4("Test") tree structure
+     * names = {n1, n2, n3, n4}, result = "Test" will result in a n1->n2->n3->n4("Test") tree structure
      *
      * @param names The chain of children to create
      * @return A CommandTree originating from the last child in the chan
@@ -74,9 +74,11 @@ class CommandTree<K, T> {
     }
 
     fun getValue(names: List<K>): T? {
-        val endNode = names.fold(rootNode, { node, name -> node.getChild(name) })
+        val endNode = names.fold(rootNode, { node, name -> node.getChildChecked(name) })
         return getEndNodeValue(endNode)
     }
+
+    fun getValue(): T? = getEndNodeValue(rootNode)
 
     /**
      * Follows the tree until it comes to an end node.
@@ -84,10 +86,9 @@ class CommandTree<K, T> {
      */
     fun getValueIgnored(names: List<K>): DepthValue<T?> {
         //todo: https://discuss.kotlinlang.org/t/unit-return-value-useful-to-break-out-of-nested-lambdas/2083 to make more performant
-        var i = 0
 
         names.foldIndexed(rootNode, { i, node, name ->
-            val child = node.getChild(name)
+            val child = node.getChildChecked(name)
             if (child is EndNode<K, *>)
                 return DepthValue(i + 1, getEndNodeValue(child))
             else
@@ -97,10 +98,28 @@ class CommandTree<K, T> {
         return DepthValue(0, null)
     }
 
-    data class DepthValue<T>(val depth: Int, val value: T)
+    /**
+     * Follows the tree until it reaches an end node or the given path can not be
+     * followed further as there are no matching entries
+     */
+    fun getChildFurthest(names: List<K>): DepthValue<CommandTree<K, T>?> {
+        val res = names.foldIndexed(rootNode, { i, node, name ->
+            val child = node.getChild(name)
+            if (child == null) {
+                return DepthValue(i, CommandTree(node))
+            } else if (child is EndNode<K, *> || i >= names.lastIndex)
+                return DepthValue(i + 1, CommandTree(child))
+            else
+                child
+        })
+        //This should never be reached
+        return DepthValue(0, null)
+    }
+
+    data class DepthValue<T>(val depth: Int, val result: T)
 
     /**
-     * @return returns null if the value is not an end node
+     * @return returns null if the result is not an end node
      */
     private fun getEndNodeValue(endNode: Node<K>): T? {
         @Suppress("UNCHECKED_CAST")
@@ -132,10 +151,10 @@ class CommandTree<K, T> {
          * @return The newly created node
          */
         fun addChild(node: Node<K>): Node<K> {
-            //returns the old value if a value is already present
+            //returns the old result if a result is already present
             if (node.name == null) throw IllegalArgumentException("A subnode cannot have a name of null")
             val nodeValue = subNodes.putIfAbsent(node.name, node)
-            //old value or null if successfull
+            //old result or null if successfull
             if (nodeValue != null)
                 throw InvalidParameterException("A node with name ${node.name} is already present in the node ${name}")
             return node
@@ -154,12 +173,14 @@ class CommandTree<K, T> {
 
         fun hasChild(name: K) = subNodes.contains(name)
 
-        fun getChild(name: K): Node<K> {
+        fun getChildChecked(name: K): Node<K> {
             val ret = subNodes[name]
             if (ret == null)
                 throw IllegalArgumentException("A node with the name ${name} could not be found")
             return ret
         }
+
+        fun getChild(name: K): Node<K>? = subNodes[name]
 
         fun getChildren(): Set<K> {
             return subNodes.keys
@@ -168,7 +189,7 @@ class CommandTree<K, T> {
     }
 
     /**
-     * This node has no successors and stores the actual value that can be retrieved
+     * This node has no successors and stores the actual result that can be retrieved
      * from the CommandTree
      */
     private class EndNode<K, T>(name: K, val value: T) : Node<K>(name) {
