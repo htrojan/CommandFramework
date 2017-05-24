@@ -1,6 +1,7 @@
 package lobbi44.kt.command
 
 import lobbi44.kt.command.util.CommandTree
+import lobbi44.kt.command.util.MethodSignature
 import org.bukkit.command.Command
 import org.bukkit.command.CommandMap
 import org.bukkit.command.CommandSender
@@ -22,6 +23,8 @@ class CommandFramework(private val plugin: Plugin, private val logger: Logger) {
         constructor(method: Method, obj: Any) : this(Pair(method, obj))
     }
 
+
+    private val commandSignature = MethodSignature(listOf(CommandEvent::class.java), Boolean::class.java)
     private lateinit var bukkitCommands: CommandMap
     private val commandTree = CommandTree<String, FrameworkCommand>()
 
@@ -60,8 +63,7 @@ class CommandFramework(private val plugin: Plugin, private val logger: Logger) {
         var reg = 0
         obj.javaClass.methods.forEach {
             val commandData = it.getAnnotation(lobbi44.kt.command.annotations.Command::class.java)
-            val signatureMatches = it.parameterCount == 1 && it.parameterTypes[0] == CommandEvent::class.java && it.returnType == Boolean::class.java
-            if (commandData != null && signatureMatches) {
+            if (commandData != null && commandSignature.matches(it)) {
                 registerCommand(commandData, obj, it)
                 ++reg
             }
