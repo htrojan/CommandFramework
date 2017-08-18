@@ -64,7 +64,7 @@ class CommandTree<K, T> {
      * @param names The chain of children to create
      * @return A CommandTree originating from the last child in the chan
      */
-    fun addChain(names: List<K>, value: T? = null): CommandTree<K, T> {
+    fun addChained(names: List<K>, value: T? = null): CommandTree<K, T> {
 
         val node = names.foldIndexed(rootNode, { i, node: Node<K>, name: K ->
             val n = if (value != null && i == names.lastIndex) EndNode(name, value) else Node(name)

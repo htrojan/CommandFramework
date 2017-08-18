@@ -73,22 +73,22 @@ class CommandFramework(private val plugin: Plugin, private val logger: Logger) {
 
     private fun registerCommand(commandData: lobbi44.kt.command.annotations.Command, obj: Any, method: Method) {
         val subCommands = commandData.name.split(".")
-        val commandLabel = subCommands[0]
-        val isCommandPresent = commandTree.hasChild(commandLabel)
-        commandTree.addChain(subCommands, FrameworkCommand(method, obj))
-        //This ia only a subCommand to a already registered commandData in the Bukkit bukkitCommands
-        if (isCommandPresent)
-            return
+        val commandLabel = subCommands.first()
+        val isRootCommandExisting = commandTree.hasChild(commandLabel)
 
-        bukkitCommands.register(plugin.name, DelegateCommand(commandLabel, commandData.description, commandData.usage, listOf(), this::onCommand, this::onTabComplete))
+        if (!isRootCommandExisting) {
+            val delegateCommand = DelegateCommand(commandLabel, commandData.description, commandData.usage, listOf(), this::onCommand, this::onTabComplete)
+            bukkitCommands.register(plugin.name, delegateCommand)
+        }
+        commandTree.addChained(subCommands, FrameworkCommand(method, obj))
     }
 
     /**
      * This method handles all commands delegated to the commandFramework.
      * The commands' names are split up into their label and their args
      */
-    fun onCommand(sender: CommandSender?, command: Command?, label: String?, args: Array<out String>?): Boolean {
-        val pathToCommand: List<String> = if (args == null) listOf(label!!) else listOf(label!!) + args.toList()
+    fun onCommand(sender: CommandSender?, command: Command?, label: String, args: Array<out String>?): Boolean {
+        val pathToCommand: List<String> = if (args == null) listOf(label) else listOf(label) + args.toList()
         val treeResult = commandTree.getValueIgnored(pathToCommand)
         val cmd = treeResult.result
 
@@ -117,7 +117,7 @@ class CommandFramework(private val plugin: Plugin, private val logger: Logger) {
      * *     command inside of a command block, this will be the player, not
      * *     the command block.
      * *
-     * @param command Command which was executed
+     * @param bukkitCommand Command which was executed
      * *
      * @param alias The alias used
      * *
@@ -157,12 +157,12 @@ class CommandFramework(private val plugin: Plugin, private val logger: Logger) {
      * This implementation of the Bukkit Command class is used to delegate all executions of the commands to the CommandFramework
      */
     private class DelegateCommand(name: String?, description: String? = null, usageMessage: String? = null, aliases: List<String>
-                                  , var executor: (CommandSender?, Command?, String?, Array<out String>?) -> Boolean,
+                                  , var executor: (CommandSender?, Command, String, Array<out String>?) -> Boolean,
                                   var completer: (CommandSender?, Command, String?, Array<out String>?) -> MutableList<String>)
         : Command(name, description, usageMessage, aliases) {
 
 
-        override fun execute(sender: CommandSender?, commandLabel: String?, args: Array<out String>?): Boolean = executor(sender, this, commandLabel, args)
+        override fun execute(sender: CommandSender?, commandLabel: String, args: Array<out String>?): Boolean = executor(sender, this, commandLabel, args)
 
         override fun tabComplete(sender: CommandSender?, alias: String?, args: Array<out String>?): MutableList<String> {
             return completer(sender, this, alias, args)
